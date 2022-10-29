@@ -22,7 +22,7 @@ class DB_Queries:
     # 모든 검색문은 여기에 각각 하나의 메소드로 정의
 
     def selectCustomers(self):
-        sql = "SELECT DISTINCT name FROM customers"
+        sql = "SELECT DISTINCT name FROM customers ORDER BY name ASC "
         params = ()
 
         util = DB_Utils()
@@ -30,14 +30,20 @@ class DB_Queries:
         return rows
 
     def selectCountry(self):
-        sql = "SELECT DISTINCT country FROM customers"
+        sql = "SELECT DISTINCT country FROM customers ORDER BY country ASC"
         params = ()
 
         util = DB_Utils()
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
         return rows
 
+    def selectCity(self):
+        sql = "SELECT DISTINCT city FROM customers ORDER BY city ASC"
+        params = ()
 
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
 
 
 class SubWindow(QWidget):
@@ -48,7 +54,7 @@ class SubWindow(QWidget):
     def setupUI(self):
 
         self.setWindowTitle("서브 페이지")
-        self.setGeometry(20, 20, 800, 600)
+        self.setGeometry(100, 100, 800, 600)
 
 
         # 타이틀 설정
@@ -57,17 +63,29 @@ class SubWindow(QWidget):
         self.topSubLayout.addWidget(self.title)
 
         # 주문번호
+        self.orderNumBox = QHBoxLayout()
         self.orderNum = QLabel("주문번호: ", self)
+        self.orderNumT = QLabel(str(0), self)
+        self.orderNumBox.addWidget(self.orderNum)
+        self.orderNumBox.addWidget(self.orderNumT)
+
         # 상품개수
+        self.orderCntBox = QHBoxLayout()
         self.orderCnt = QLabel("상품개수: ", self)
+        self.orderCntT = QLabel(str(0), self)
+        self.orderCntBox.addWidget(self.orderCnt)
+        self.orderCntBox.addWidget(self.orderCntT)
         # 주문금액
+        self.orderAmountBox = QHBoxLayout()
         self.orderAmount = QLabel("주문금액: ", self)
+        self.orderAmountT = QLabel(str(0), self)
+        self.orderAmountBox.addWidget(self.orderAmount)
+        self.orderAmountBox.addWidget(self.orderAmountT)
 
         self.infoLayout = QHBoxLayout()
-        self.infoLayout.addWidget(self.orderNum)
-        self.infoLayout.addWidget(self.orderCnt)
-        self.infoLayout.addWidget(self.orderAmount)
-        self.title.setLayout(self.infoLayout)
+        self.infoLayout.addLayout(self.orderNumBox)
+        self.infoLayout.addLayout(self.orderCntBox)
+        self.infoLayout.addLayout(self.orderAmountBox)
 
         self.tableWidget = QTableWidget()
         self.tableWidget.setRowCount(10)
@@ -111,10 +129,9 @@ class MainWindow(QWidget):
 
     def setupUI(self):
         query = DB_Queries()
-        customers = query.selectCustomers()  # 딕셔너리의 리스트
-        country = query.selectCountry()  # 딕셔너리의 리스트
-        print(customers)
-        print()
+        customers = query.selectCustomers()  # 고객
+        country = query.selectCountry()  # 국가
+        city = query.selectCity()  # 도시
 
 
         self.setWindowTitle("주문 검색 페이지")
@@ -143,6 +160,9 @@ class MainWindow(QWidget):
         # 도시 부분 셀렉트 박스
         self.city = QLabel("도시: ", self)
         self.cityCombo = QComboBox(self)
+        columnName3 = list(city[0].keys())[0]
+        items3 = ['없음' if row[columnName3] == None else row[columnName3] for row in city]
+        self.cityCombo.addItems(items3)
 
         # 검색 버튼
         self.searchBtn = QPushButton('검색', self)
