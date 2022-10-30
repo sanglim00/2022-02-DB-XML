@@ -24,7 +24,7 @@ class DB_Queries:
 
     def initTable(self):  # 초기에는 고객의 “ALL”이 선택된 것으로 가정하고, 검색 결과를 출력
         # sql = "SELECT * FROM customers ORDER BY name ASC "
-        sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+        sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
               "FROM customers " \
               "JOIN orders " \
               "ON customers.customerId = orders.customerId "
@@ -36,7 +36,7 @@ class DB_Queries:
         return rows
 
     def selectCustomers(self):
-        sql = "SELECT DISTINCT name FROM customers ORDER BY name ASC "
+        sql = "SELECT DISTINCT name as customer FROM customers ORDER BY name ASC "
         params = ()
 
         util = DB_Utils()
@@ -46,14 +46,14 @@ class DB_Queries:
     def searchSelectCustomers(self, value):
 
         if value == 'ALL':
-            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
                   "ON customers.customerId = orders.customerId "
             params = ()
         else:
             # sql = "SELECT * FROM customers WHERE name = %s"
-            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
                   "ON customers.customerId = orders.customerId " \
@@ -76,14 +76,14 @@ class DB_Queries:
     def searchSelectCountry(self, value):
 
         if value == 'ALL':
-            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
                   "ON customers.customerId = orders.customerId "
             params = ()
         else:
             # sql = "SELECT * FROM customers WHERE name = %s"
-            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
                   "ON customers.customerId = orders.customerId " \
@@ -105,14 +105,14 @@ class DB_Queries:
     def searchSelectCity(self, value):
 
         if value == 'ALL':
-            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
                   "ON customers.customerId = orders.customerId "
             params = ()
         else:
             # sql = "SELECT * FROM customers WHERE name = %s"
-            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
                   "ON customers.customerId = orders.customerId " \
@@ -361,9 +361,8 @@ class MainWindow(QWidget):
         self.searchLayout.addWidget(self.initBtn)
         self.title.setLayout(self.searchLayout)
 
-
         # 검색 주문 수
-        self.cntResult = QGroupBox('검색된 주문의 개수: ', self)
+        self.cntResult = QGroupBox('검색된 주문의 개수: '+ str(len(init)), self)
         self.countResult = QVBoxLayout()
         self.countResult.addWidget(self.cntResult)
         self.tableWidget = QTableWidget()
@@ -372,7 +371,6 @@ class MainWindow(QWidget):
         self.tableLayout = QVBoxLayout()
         self.tableLayout.addWidget(self.tableWidget)
         self.tableWidget.cellClicked.connect(self.clickedSellInfo)
-        # self.tableWidget.cellClicked.connect(self.secondWindow)
         columnNames = list(init[0].keys())
         self.tableWidget.setHorizontalHeaderLabels(columnNames)
 
@@ -406,18 +404,26 @@ class MainWindow(QWidget):
     def customerComboBoxActivated(self):
         self.customerActive = self.customerCombo.currentText()
         self.nowSelect = 'customer'
-        
+        # country와 city 콤보박스의 값을 초기화 시킨다
+        self.countryCombo.setCurrentText('ALL')
+        self.cityCombo.setCurrentText('ALL')
+
 
     # country 콤보박스를 선택했다면
     def countryComboBoxActivated(self):
         self.countryActive = self.countryCombo.currentText()
         self.nowSelect = 'country'
-    
+        # customer 와 city 콤보박스의 값을 초기화 시킨다
+        self.customerCombo.setCurrentText('ALL')
+        self.cityCombo.setCurrentText('ALL')
+
 
     # city 콤보박스를 선택했다면
     def cityComboBoxActivated(self):
         self.cityActive = self.cityCombo.currentText()
         self.nowSelect = 'city'
+        # country 콤보박스의 값을 초기화 시킨다
+        self.customerCombo.setCurrentText('ALL')
 
 
     # 검색 버튼 클릭
@@ -439,6 +445,8 @@ class MainWindow(QWidget):
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(len(self.showWhat))
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.cntResult.setTitle('검색된 주문의 개수: '+ str(len(self.showWhat)))
 
         for rowIDX, ctm in enumerate(self.showWhat):
             for columnIDX, (k, v) in enumerate(ctm.items()):
