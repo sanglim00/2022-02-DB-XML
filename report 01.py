@@ -21,9 +21,34 @@ class DB_Utils:
 class DB_Queries:
     # 모든 검색문은 여기에 각각 하나의 메소드로 정의
 
+    def initTable(self):  # 초기에는 고객의 “ALL”이 선택된 것으로 가정하고, 검색 결과를 출력
+        # sql = "SELECT * FROM customers ORDER BY name ASC "
+        sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+              "FROM customers " \
+              "JOIN orders " \
+              "ON customers.customerId = orders.customerId "
+
+        params = ()
+
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
+
     def selectCustomers(self):
         sql = "SELECT DISTINCT name FROM customers ORDER BY name ASC "
         params = ()
+
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
+
+    def searchSelectCustomers(self, value):
+        if value == 'ALL':
+            sql = "SELECT * FROM customers WHERE name"
+            params = ()
+        else:
+            sql = "SELECT * FROM customers WHERE name = %s"
+            params = (value)         # SQL문의 실제 파라미터 값의 튜플
 
         util = DB_Utils()
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
@@ -129,6 +154,8 @@ class MainWindow(QWidget):
 
     def setupUI(self):
         query = DB_Queries()
+
+        init = query.initTable()  # 초기에는 고객의 “ALL”이 선택된 것으로 가정하고, 검색 결과를 출력
         customers = query.selectCustomers()  # 고객
         country = query.selectCountry()  # 국가
         city = query.selectCity()  # 도시
@@ -170,9 +197,12 @@ class MainWindow(QWidget):
         # 검색 버튼
         self.searchBtn = QPushButton('검색', self)
         self.searchBtn.setMaximumWidth(200)
+        self.searchBtn.clicked.connect(self.searchButtonClicked)
+
         # 초기화 버튼
         self.initBtn = QPushButton('초기화', self)
         self.initBtn.setMaximumWidth(200)
+        self.initBtn.clicked.connect(self.initButtonClicked)
 
         self.buttonLayout = QVBoxLayout()
         self.buttonLayout.addWidget(self.searchBtn)
@@ -198,13 +228,26 @@ class MainWindow(QWidget):
         self.cntResult = QGroupBox('검색된 주문의 개수: ', self)
         self.countResult = QVBoxLayout()
         self.countResult.addWidget(self.cntResult)
-
         self.tableWidget = QTableWidget()
-        self.tableWidget.setRowCount(10)
-        self.tableWidget.setColumnCount(20)
+        self.tableWidget.setRowCount(len(init))
+        self.tableWidget.setColumnCount(len(init[0]))
         self.tableLayout = QVBoxLayout()
         self.tableLayout.addWidget(self.tableWidget)
         self.tableWidget.cellClicked.connect(self.secondWindow)
+        columnNames = list(init[0].keys())
+        self.tableWidget.setHorizontalHeaderLabels(columnNames)
+
+        for rowIDX, customer in enumerate(init):  # customer는 딕셔너리
+            for columnIDX, (k, v) in enumerate(customer.items()):
+                if v == None:  # 파이썬이 DB의 널값을 None으로 변환함.
+                    continue  # QTableWidgetItem 객체를 생성하지 않음
+                else:
+                    item = QTableWidgetItem(str(v))
+
+                self.tableWidget.setItem(rowIDX, columnIDX, item)
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
 
 
         self.layout = QVBoxLayout()
@@ -212,6 +255,31 @@ class MainWindow(QWidget):
         self.layout.addLayout(self.countResult)
         self.layout.addLayout(self.tableLayout)
         self.setLayout(self.layout)
+
+    # 검색 버튼 클릭
+    def searchButtonClicked(self):
+        print('search button clicked')
+
+    # 초기화 버튼 클릭
+    def initButtonClicked(self):
+        # 초기에는 고객의 “ALL”이 선택된 것으로 가정하고, 검색 결과를 출력
+        query = DB_Queries()
+        init = query.initTable()
+
+        columnNames = list(init[0].keys())
+        self.tableWidget.setHorizontalHeaderLabels(columnNames)
+
+        for rowIDX, customer in enumerate(init):  # customer는 딕셔너리
+            for columnIDX, (k, v) in enumerate(customer.items()):
+                if v == None:  # 파이썬이 DB의 널값을 None으로 변환함.
+                    continue  # QTableWidgetItem 객체를 생성하지 않음
+                else:
+                    item = QTableWidgetItem(str(v))
+
+                self.tableWidget.setItem(rowIDX, columnIDX, item)
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
 
 
     # 주문 상세 내역 윈도우 띄우기
