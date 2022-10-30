@@ -147,6 +147,7 @@ class MainWindow(QWidget):
         self.customerCombo = QComboBox(self)
         columnName = list(customers[0].keys())[0]
         items = ['없음' if row[columnName] == None else row[columnName] for row in customers]
+        self.customerCombo.addItems(['ALL'])
         self.customerCombo.addItems(items)
 
         # 국가 부분 셀렉트 박스
@@ -154,6 +155,7 @@ class MainWindow(QWidget):
         self.countryCombo = QComboBox(self)
         columnName2 = list(country[0].keys())[0]
         items2 = ['없음' if row[columnName2] == None else row[columnName2] for row in country]
+        self.countryCombo.addItems(['ALL'])
         self.countryCombo.addItems(items2)
 
 
@@ -162,6 +164,7 @@ class MainWindow(QWidget):
         self.cityCombo = QComboBox(self)
         columnName3 = list(city[0].keys())[0]
         items3 = ['없음' if row[columnName3] == None else row[columnName3] for row in city]
+        self.cityCombo.addItems(['ALL'])
         self.cityCombo.addItems(items3)
 
         # 검색 버튼
@@ -211,6 +214,7 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
 
 
+    # 주문 상세 내역 윈도우 띄우기
     def secondWindow(self):
         self.subLayout = SubWindow()
         self.subLayout.show()
