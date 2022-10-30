@@ -291,6 +291,9 @@ class MainWindow(QWidget):
         country = query.selectCountry()  # 국가
         city = query.selectCity()  # 도시
 
+        # 가장 마지막으로 선택한 콤보박스를 확인하기 위한 변수
+        self.nowSelect = ''
+
 
         self.setWindowTitle("주문 검색 페이지")
         self.setGeometry(0, 0, 800, 600)
@@ -307,7 +310,7 @@ class MainWindow(QWidget):
         items = ['없음' if row[columnName] == None else row[columnName] for row in customers]
         self.customerCombo.addItems(['ALL'])
         self.customerCombo.addItems(items)
-        self.customerCombo.activated.connect(self.comboBoxActivated)
+        self.customerCombo.activated.connect(self.customerComboBoxActivated)
 
         # 국가 부분 셀렉트 박스
         self.country = QLabel("국가: ", self)
@@ -316,7 +319,7 @@ class MainWindow(QWidget):
         items2 = ['없음' if row[columnName2] == None else row[columnName2] for row in country]
         self.countryCombo.addItems(['ALL'])
         self.countryCombo.addItems(items2)
-        self.countryCombo.activated.connect(self.comboBoxActivated)
+        self.countryCombo.activated.connect(self.countryComboBoxActivated)
 
 
         # 도시 부분 셀렉트 박스
@@ -326,7 +329,7 @@ class MainWindow(QWidget):
         items3 = ['없음' if row[columnName3] == None else row[columnName3] for row in city]
         self.cityCombo.addItems(['ALL'])
         self.cityCombo.addItems(items3)
-        self.cityCombo.activated.connect(self.comboBoxActivated)
+        self.cityCombo.activated.connect(self.cityComboBoxActivated)
 
 
         # 검색 버튼
@@ -394,31 +397,50 @@ class MainWindow(QWidget):
         self.layout.addLayout(self.tableLayout)
         self.setLayout(self.layout)
 
+
     def clickedSellInfo(self):
         self.orderNum = self.tableWidget.item(self.tableWidget.currentRow() , 0).text()
         self.secondWindow()
 
-    def comboBoxActivated(self):
+    # customer 콤보박스를 선택했다면
+    def customerComboBoxActivated(self):
         self.customerActive = self.customerCombo.currentText()
-        self.countryActive = self.countryCombo.currentText()
-        self.cityActive = self.cityCombo.currentText()
+        self.nowSelect = 'customer'
+        
 
-        print(self.customerActive)
-        print(self.countryActive)
-        print(self.cityActive)
+    # country 콤보박스를 선택했다면
+    def countryComboBoxActivated(self):
+        self.countryActive = self.countryCombo.currentText()
+        self.nowSelect = 'country'
+    
+
+    # city 콤보박스를 선택했다면
+    def cityComboBoxActivated(self):
+        self.cityActive = self.cityCombo.currentText()
+        self.nowSelect = 'city'
+
 
     # 검색 버튼 클릭
     def searchButtonClicked(self):
         query = DB_Queries()
-        customer = query.searchSelectCustomers(self.customerActive)
-        country = query.searchSelectCountry(self.countryActive)
-        city = query.searchSelectCity(self.cityActive)
+
+        # self.showWhat은 어떤 콤보박스 기준으로 검색하여 보여줄지 설정
+
+        # customer 콤보박스를 기준으로 검색
+        if self.nowSelect == 'customer':
+            self.showWhat = query.searchSelectCustomers(self.customerActive)
+        # country 콤보박스를 기준으로 검색
+        elif self.nowSelect == 'country':
+            self.showWhat = query.searchSelectCountry(self.countryActive)
+        # city 콤보박스를 기준으로 검색
+        else:
+            self.showWhat = query.searchSelectCity(self.cityActive)
 
         self.tableWidget.clearContents()
-        self.tableWidget.setRowCount(len(customer))
+        self.tableWidget.setRowCount(len(self.showWhat))
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        for rowIDX, ctm in enumerate(customer):
+        for rowIDX, ctm in enumerate(self.showWhat):
             for columnIDX, (k, v) in enumerate(ctm.items()):
                 if v == None:
                     continue
