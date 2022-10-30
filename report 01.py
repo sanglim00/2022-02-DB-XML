@@ -23,7 +23,6 @@ class DB_Queries:
     # 모든 검색문은 여기에 각각 하나의 메소드로 정의
 
     def initTable(self):  # 초기에는 고객의 “ALL”이 선택된 것으로 가정하고, 검색 결과를 출력
-        # sql = "SELECT * FROM customers ORDER BY name ASC "
         sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
               "FROM customers " \
               "JOIN orders " \
@@ -52,7 +51,6 @@ class DB_Queries:
                   "ON customers.customerId = orders.customerId "
             params = ()
         else:
-            # sql = "SELECT * FROM customers WHERE name = %s"
             sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
@@ -82,7 +80,6 @@ class DB_Queries:
                   "ON customers.customerId = orders.customerId "
             params = ()
         else:
-            # sql = "SELECT * FROM customers WHERE name = %s"
             sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
@@ -111,7 +108,6 @@ class DB_Queries:
                   "ON customers.customerId = orders.customerId "
             params = ()
         else:
-            # sql = "SELECT * FROM customers WHERE name = %s"
             sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name as customer, orders.comments " \
                   "FROM customers " \
                   "JOIN orders " \
@@ -139,14 +135,15 @@ class DB_Queries:
 
 
 class SaveMyData:
-    def __init__(self, data):
+    def __init__(self, data, orderNumber):
         self.data = data
-
-    def JSON(self):
-        print('json clicked')
+        self.orderNumber = orderNumber
 
     def CSV(self):
         print('csv clicked')
+
+    def JSON(self):
+        print('json clicked')
 
     def XML(self):
         print('xml clicked')
@@ -258,7 +255,7 @@ class SubWindow(QWidget):
 
     def saveData(self):
 
-        save = SaveMyData(self.dbManager)
+        save = SaveMyData(self.dbManager, self.orderNumber)
 
         fileType = self.fileTypeBox
         type = ''
