@@ -1,6 +1,6 @@
 import pymysql
 from PyQt5.QtWidgets import *
-import sys
+import sys, datetime
 
 class DB_Utils:
 
@@ -43,16 +43,27 @@ class DB_Queries:
         return rows
 
     def searchSelectCustomers(self, value):
+
         if value == 'ALL':
-            sql = "SELECT * FROM customers WHERE name"
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+                  "FROM customers " \
+                  "JOIN orders " \
+                  "ON customers.customerId = orders.customerId "
             params = ()
         else:
-            sql = "SELECT * FROM customers WHERE name = %s"
-            params = (value)         # SQL문의 실제 파라미터 값의 튜플
+            # sql = "SELECT * FROM customers WHERE name = %s"
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+                  "FROM customers " \
+                  "JOIN orders " \
+                  "ON customers.customerId = orders.customerId " \
+                  "WHERE name = %s"
+            params = (value)  # SQL문의 실제 파라미터 값의 튜플
 
         util = DB_Utils()
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
         return rows
+
+
 
     def selectCountry(self):
         sql = "SELECT DISTINCT country FROM customers ORDER BY country ASC"
@@ -176,6 +187,7 @@ class MainWindow(QWidget):
         items = ['없음' if row[columnName] == None else row[columnName] for row in customers]
         self.customerCombo.addItems(['ALL'])
         self.customerCombo.addItems(items)
+        self.customerCombo.activated.connect(self.comboBoxActivated)
 
         # 국가 부분 셀렉트 박스
         self.country = QLabel("국가: ", self)
@@ -241,6 +253,8 @@ class MainWindow(QWidget):
             for columnIDX, (k, v) in enumerate(customer.items()):
                 if v == None:  # 파이썬이 DB의 널값을 None으로 변환함.
                     continue  # QTableWidgetItem 객체를 생성하지 않음
+                elif isinstance(v, datetime.date):  # QTableWidgetItem 객체 생성
+                    item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
                 else:
                     item = QTableWidgetItem(str(v))
 
@@ -256,9 +270,34 @@ class MainWindow(QWidget):
         self.layout.addLayout(self.tableLayout)
         self.setLayout(self.layout)
 
+    def comboBoxActivated(self):
+        self.customerActive = self.customerCombo.currentText()
+
     # 검색 버튼 클릭
     def searchButtonClicked(self):
-        print('search button clicked')
+        query = DB_Queries()
+        customer = query.searchSelectCustomers(self.customerActive)
+
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(len(customer))
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        for rowIDX, ctm in enumerate(customer):
+            for columnIDX, (k, v) in enumerate(ctm.items()):
+                if v == None:
+                    continue
+                elif isinstance(v, datetime.date):
+                    item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
+                else:
+                    item = QTableWidgetItem(str(v))
+
+                self.tableWidget.setItem(rowIDX, columnIDX, item)
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+
+
+
 
     # 초기화 버튼 클릭
     def initButtonClicked(self):
