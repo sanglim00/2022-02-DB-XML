@@ -1,4 +1,5 @@
-import pymysql
+import pymysql, sys, json, csv
+import xml.etree.ElementTree as ET
 from PyQt5.QtWidgets import *
 import sys, datetime
 
@@ -64,7 +65,6 @@ class DB_Queries:
         return rows
 
 
-
     def selectCountry(self):
         sql = "SELECT DISTINCT country FROM customers ORDER BY country ASC"
         params = ()
@@ -82,9 +82,24 @@ class DB_Queries:
         return rows
 
 
+class SaveMyData:
+    def __init__(self, data):
+        self.data = data
+
+    def JSON(self):
+        print('json clicked')
+
+    def CSV(self):
+        print('csv clicked')
+
+    def XML(self):
+        print('xml clicked')
+
+
 class SubWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.dbManager = DB_Utils()
         self.setupUI()
 
     def setupUI(self):
@@ -141,6 +156,7 @@ class SubWindow(QWidget):
         self.saveAsGroup = QGroupBox('파일 출력')
         self.saveBtn = QPushButton('저장')
         self.saveBtn.setMaximumWidth(200)
+        self.saveBtn.clicked.connect(self.saveData)
 
         self.saveAsLayout = QHBoxLayout()
         self.saveAsLayout.addWidget(self.fileTypeBox['csv'])
@@ -155,6 +171,26 @@ class SubWindow(QWidget):
         self.layout.addLayout(self.tableLayout)
         self.layout.addWidget(self.saveAsGroup)
         self.setLayout(self.layout)
+
+    def saveData(self):
+
+        save = SaveMyData(self.dbManager)
+
+        fileType = self.fileTypeBox
+        type = ''
+
+        if fileType['csv'].isChecked():
+            save.CSV()
+            type = 'csv'
+        elif fileType['json'].isChecked():
+            save.JSON()
+            type = 'json'
+        else:
+            save.XML()
+            type = 'xml'
+
+
+        QMessageBox.about(self, type ,'파일을 저장했습니다.')
 
 
 
@@ -297,28 +333,13 @@ class MainWindow(QWidget):
         self.tableWidget.resizeRowsToContents()
 
 
-
-
     # 초기화 버튼 클릭
     def initButtonClicked(self):
-        # 초기에는 고객의 “ALL”이 선택된 것으로 가정하고, 검색 결과를 출력
-        query = DB_Queries()
-        init = query.initTable()
+        self.tableWidget.clearContents()
+        self.customerCombo.setCurrentText('ALL')
+        self.countryCombo.setCurrentText('ALL')
+        self.cityCombo.setCurrentText('ALL')
 
-        columnNames = list(init[0].keys())
-        self.tableWidget.setHorizontalHeaderLabels(columnNames)
-
-        for rowIDX, customer in enumerate(init):  # customer는 딕셔너리
-            for columnIDX, (k, v) in enumerate(customer.items()):
-                if v == None:  # 파이썬이 DB의 널값을 None으로 변환함.
-                    continue  # QTableWidgetItem 객체를 생성하지 않음
-                else:
-                    item = QTableWidgetItem(str(v))
-
-                self.tableWidget.setItem(rowIDX, columnIDX, item)
-
-        self.tableWidget.resizeColumnsToContents()
-        self.tableWidget.resizeRowsToContents()
 
 
     # 주문 상세 내역 윈도우 띄우기
