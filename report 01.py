@@ -123,6 +123,20 @@ class DB_Queries:
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
         return rows
 
+    def orderDetail(self, value):
+        sql = "SELECT od.orderLineNo, od.productCode, p.name as productName , od.quantity, od.priceEach, od.quantity * od.priceEach as 상품주문액 " \
+              "FROM orderDetails od INNER JOIN orders o USING(orderNo) " \
+              "INNER JOIN products p " \
+              "USING (productCode) " \
+              "WHERE orderNo = %s " \
+              "ORDER BY orderLineNo"
+
+        params = (str(value))
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
+
+
 
 class SaveMyData:
     def __init__(self, data):
@@ -139,16 +153,20 @@ class SaveMyData:
 
 
 class SubWindow(QWidget):
-    def __init__(self):
+    def __init__(self, orderNumber):
         super().__init__()
         self.dbManager = DB_Utils()
+        self.orderNumber = orderNumber
         self.setupUI()
+
 
     def setupUI(self):
 
+        query = DB_Queries()
+        orderdetail = query.orderDetail(self.orderNumber)
+
         self.setWindowTitle("서브 페이지")
         self.setGeometry(100, 100, 800, 600)
-
 
         # 타이틀 설정
         self.title = QGroupBox('주문 상세 내역', self)
@@ -158,20 +176,26 @@ class SubWindow(QWidget):
         # 주문번호
         self.orderNumBox = QHBoxLayout()
         self.orderNum = QLabel("주문번호: ", self)
-        self.orderNumT = QLabel(str(0), self)
+        self.orderNumT = QLabel(str(self.orderNumber), self)
         self.orderNumBox.addWidget(self.orderNum)
         self.orderNumBox.addWidget(self.orderNumT)
 
         # 상품개수
         self.orderCntBox = QHBoxLayout()
         self.orderCnt = QLabel("상품개수: ", self)
-        self.orderCntT = QLabel(str(0), self)
+        self.orderCntT = QLabel(str(len(orderdetail)) + " 개", self)
         self.orderCntBox.addWidget(self.orderCnt)
         self.orderCntBox.addWidget(self.orderCntT)
+
         # 주문금액
         self.orderAmountBox = QHBoxLayout()
         self.orderAmount = QLabel("주문금액: ", self)
-        self.orderAmountT = QLabel(str(0), self)
+        total = 0
+        for rowIDX, customer in enumerate(orderdetail):
+            for columnIDX, (k, v) in enumerate(customer.items()):
+                if k =="상품주문액":
+                    total+=v
+        self.orderAmountT = QLabel(str(total)+" 원", self)
         self.orderAmountBox.addWidget(self.orderAmount)
         self.orderAmountBox.addWidget(self.orderAmountT)
 
@@ -180,11 +204,29 @@ class SubWindow(QWidget):
         self.infoLayout.addLayout(self.orderCntBox)
         self.infoLayout.addLayout(self.orderAmountBox)
 
+
         self.tableWidget = QTableWidget()
-        self.tableWidget.setRowCount(10)
-        self.tableWidget.setColumnCount(20)
+        self.tableWidget.setRowCount(len(orderdetail))
+        self.tableWidget.setColumnCount(len(orderdetail[0]))
         self.tableLayout = QVBoxLayout()
         self.tableLayout.addWidget(self.tableWidget)
+
+        columnNames = list(orderdetail[0].keys())
+        self.tableWidget.setHorizontalHeaderLabels(columnNames)
+
+        for rowIDX, customer in enumerate(orderdetail):  # customer는 딕셔너리
+            for columnIDX, (k, v) in enumerate(customer.items()):
+                if v == None:  # 파이썬이 DB의 널값을 None으로 변환함.
+                    continue  # QTableWidgetItem 객체를 생성하지 않음
+                elif isinstance(v, datetime.date):  # QTableWidgetItem 객체 생성
+                    item = QTableWidgetItem(v.strftime('%Y-%m-%d'))
+                else:
+                    item = QTableWidgetItem(str(v))
+
+                self.tableWidget.setItem(rowIDX, columnIDX, item)
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
 
 
         # 파일 다운로드
@@ -326,7 +368,8 @@ class MainWindow(QWidget):
         self.tableWidget.setColumnCount(len(init[0]))
         self.tableLayout = QVBoxLayout()
         self.tableLayout.addWidget(self.tableWidget)
-        self.tableWidget.cellClicked.connect(self.secondWindow)
+        self.tableWidget.cellClicked.connect(self.clickedSellInfo)
+        # self.tableWidget.cellClicked.connect(self.secondWindow)
         columnNames = list(init[0].keys())
         self.tableWidget.setHorizontalHeaderLabels(columnNames)
 
@@ -351,9 +394,11 @@ class MainWindow(QWidget):
         self.layout.addLayout(self.tableLayout)
         self.setLayout(self.layout)
 
+    def clickedSellInfo(self):
+        self.orderNum = self.tableWidget.item(self.tableWidget.currentRow() , 0).text()
+        self.secondWindow()
+
     def comboBoxActivated(self):
-
-
         self.customerActive = self.customerCombo.currentText()
         self.countryActive = self.countryCombo.currentText()
         self.cityActive = self.cityCombo.currentText()
@@ -366,8 +411,8 @@ class MainWindow(QWidget):
     def searchButtonClicked(self):
         query = DB_Queries()
         customer = query.searchSelectCustomers(self.customerActive)
-        country = query.searchSelectCustomers(self.countryActive)
-        city = query.searchSelectCustomers(self.cityActive)
+        country = query.searchSelectCountry(self.countryActive)
+        city = query.searchSelectCity(self.cityActive)
 
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(len(customer))
@@ -399,7 +444,7 @@ class MainWindow(QWidget):
 
     # 주문 상세 내역 윈도우 띄우기
     def secondWindow(self):
-        self.subLayout = SubWindow()
+        self.subLayout = SubWindow(self.orderNum)
         self.subLayout.show()
 
 
