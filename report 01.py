@@ -73,9 +73,51 @@ class DB_Queries:
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
         return rows
 
+    def searchSelectCountry(self, value):
+
+        if value == 'ALL':
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+                  "FROM customers " \
+                  "JOIN orders " \
+                  "ON customers.customerId = orders.customerId "
+            params = ()
+        else:
+            # sql = "SELECT * FROM customers WHERE name = %s"
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+                  "FROM customers " \
+                  "JOIN orders " \
+                  "ON customers.customerId = orders.customerId " \
+                  "WHERE country = %s"
+            params = (value)  # SQL문의 실제 파라미터 값의 튜플
+
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
+
     def selectCity(self):
         sql = "SELECT DISTINCT city FROM customers ORDER BY city ASC"
         params = ()
+
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
+
+    def searchSelectCity(self, value):
+
+        if value == 'ALL':
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+                  "FROM customers " \
+                  "JOIN orders " \
+                  "ON customers.customerId = orders.customerId "
+            params = ()
+        else:
+            # sql = "SELECT * FROM customers WHERE name = %s"
+            sql = "SELECT orders.orderNo, orders.orderDate, orders.requiredDate, orders.shippedDate, orders.status , customers.name, orders.comments " \
+                  "FROM customers " \
+                  "JOIN orders " \
+                  "ON customers.customerId = orders.customerId " \
+                  "WHERE city = %s"
+            params = (value)  # SQL문의 실제 파라미터 값의 튜플
 
         util = DB_Utils()
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
@@ -232,6 +274,7 @@ class MainWindow(QWidget):
         items2 = ['없음' if row[columnName2] == None else row[columnName2] for row in country]
         self.countryCombo.addItems(['ALL'])
         self.countryCombo.addItems(items2)
+        self.countryCombo.activated.connect(self.comboBoxActivated)
 
 
         # 도시 부분 셀렉트 박스
@@ -241,6 +284,8 @@ class MainWindow(QWidget):
         items3 = ['없음' if row[columnName3] == None else row[columnName3] for row in city]
         self.cityCombo.addItems(['ALL'])
         self.cityCombo.addItems(items3)
+        self.cityCombo.activated.connect(self.comboBoxActivated)
+
 
         # 검색 버튼
         self.searchBtn = QPushButton('검색', self)
@@ -307,12 +352,22 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
 
     def comboBoxActivated(self):
+
+
         self.customerActive = self.customerCombo.currentText()
+        self.countryActive = self.countryCombo.currentText()
+        self.cityActive = self.cityCombo.currentText()
+
+        print(self.customerActive)
+        print(self.countryActive)
+        print(self.cityActive)
 
     # 검색 버튼 클릭
     def searchButtonClicked(self):
         query = DB_Queries()
         customer = query.searchSelectCustomers(self.customerActive)
+        country = query.searchSelectCustomers(self.countryActive)
+        city = query.searchSelectCustomers(self.cityActive)
 
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(len(customer))
