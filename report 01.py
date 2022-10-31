@@ -480,6 +480,9 @@ class MainWindow(QWidget):
     def searchButtonClicked(self):
         query = DB_Queries()
 
+        # 초반에 아무것도 선택 안하고 바로 검색 누르면 기본 화면만 보여지도록
+        if self.nowSelect == '':
+            return ;
         # self.showWhat은 어떤 콤보박스 기준으로 검색하여 보여줄지 설정
 
         # customer 콤보박스를 기준으로 검색
