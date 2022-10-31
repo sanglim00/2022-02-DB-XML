@@ -147,7 +147,6 @@ class SaveMyData:
         self.orderNumber = orderNumber
 
     def CSV(self):
-        print('csv clicked')
         with open(str(self.orderNumber) + '.csv', 'w', encoding='utf-8') as f:
             w = csv.writer(f)
             w.writerow(self.data[0].keys())
@@ -163,7 +162,20 @@ class SaveMyData:
             json.dump(self.data, f, indent=4, ensure_ascii = False)
 
     def XML(self):
-        print('xml clicked')
+        rootElement = ET.Element('TABLE')
+
+        for r in self.data:
+            rowElement = ET.Element('ROW')
+            rootElement.append(rowElement)
+
+            for v in list(r.keys()):
+                if r[v] == None:
+                    rowElement.attrib[v] = ''
+                else:
+                    rowElement.attrib[v] = str(r[v])
+
+        ET.ElementTree(rootElement).write(str(self.orderNumber)+'.xml', encoding='utf-8', xml_declaration=True)
+
 
 
 class SubWindow(QWidget):
