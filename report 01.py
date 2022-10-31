@@ -148,11 +148,19 @@ class SaveMyData:
 
     def CSV(self):
         print('csv clicked')
+        with open(str(self.orderNumber) + '.csv', 'w', encoding='utf-8') as f:
+            w = csv.writer(f)
+            w.writerow(self.data[0].keys())
+            for item in self.data:
+                w.writerow(item.values())
 
     def JSON(self):
-        print('json clicked')
+        for i in self.data:
+            i['priceEach'] = str(i['priceEach']) # 문자형으로 변환하여 저장
+            i['상품주문액'] = str(i['상품주문액']) # 문자형으로 변환하여 저장
+
         with open(str(self.orderNumber)+'.json', 'w', encoding='utf-8') as f:
-            json.dump(self.data, f, indent=4, ensure_ascii=False)
+            json.dump(self.data, f, indent=4, ensure_ascii = False)
 
     def XML(self):
         print('xml clicked')
@@ -169,7 +177,7 @@ class SubWindow(QWidget):
     def setupUI(self):
 
         query = DB_Queries()
-        orderdetail = query.orderDetail(self.orderNumber)
+        self.orderdetail = query.orderDetail(self.orderNumber)
 
         self.setWindowTitle("서브 페이지")
         self.setGeometry(100, 100, 800, 600)
@@ -189,7 +197,7 @@ class SubWindow(QWidget):
         # 상품개수
         self.orderCntBox = QHBoxLayout()
         self.orderCnt = QLabel("상품개수: ", self)
-        self.orderCntT = QLabel(str(len(orderdetail)) + " 개", self)
+        self.orderCntT = QLabel(str(len(self.orderdetail)) + " 개", self)
         self.orderCntBox.addWidget(self.orderCnt)
         self.orderCntBox.addWidget(self.orderCntT)
 
@@ -197,7 +205,7 @@ class SubWindow(QWidget):
         self.orderAmountBox = QHBoxLayout()
         self.orderAmount = QLabel("주문금액: ", self)
         total = 0
-        for rowIDX, customer in enumerate(orderdetail):
+        for rowIDX, customer in enumerate(self.orderdetail):
             for columnIDX, (k, v) in enumerate(customer.items()):
                 if k =="상품주문액":
                     total+=v
@@ -212,15 +220,15 @@ class SubWindow(QWidget):
 
 
         self.tableWidget = QTableWidget()
-        self.tableWidget.setRowCount(len(orderdetail))
-        self.tableWidget.setColumnCount(len(orderdetail[0]))
+        self.tableWidget.setRowCount(len(self.orderdetail))
+        self.tableWidget.setColumnCount(len(self.orderdetail[0]))
         self.tableLayout = QVBoxLayout()
         self.tableLayout.addWidget(self.tableWidget)
 
-        columnNames = list(orderdetail[0].keys())
+        columnNames = list(self.orderdetail[0].keys())
         self.tableWidget.setHorizontalHeaderLabels(columnNames)
 
-        for rowIDX, customer in enumerate(orderdetail):  # customer는 딕셔너리
+        for rowIDX, customer in enumerate(self.orderdetail):  # customer는 딕셔너리
             for columnIDX, (k, v) in enumerate(customer.items()):
                 if v == None:  # 파이썬이 DB의 널값을 None으로 변환함.
                     continue  # QTableWidgetItem 객체를 생성하지 않음
@@ -264,7 +272,7 @@ class SubWindow(QWidget):
 
     def saveData(self):
 
-        save = SaveMyData(self.dbManager, self.orderNumber)
+        save = SaveMyData(self.orderdetail, self.orderNumber)
 
         fileType = self.fileTypeBox
         type = ''
