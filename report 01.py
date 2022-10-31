@@ -104,6 +104,19 @@ class DB_Queries:
         rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
         return rows
 
+    # 국가 기준의 도시만 콤보박스 만들기
+    def selectCityFromCountry(self, country):
+        self.country = country
+        if self.country == "ALL" :
+            sql = "SELECT DISTINCT city FROM customers ORDER BY city ASC"
+        else:
+            sql = "SELECT DISTINCT city FROM customers WHERE country = '" + self.country+"' ORDER BY city ASC"
+        params = ()
+
+        util = DB_Utils()
+        rows = util.queryExecutor(db="classicmodels", sql=sql, params=params)
+        return rows
+
     def searchSelectCity(self, value):
 
         if value == 'ALL':
@@ -442,6 +455,13 @@ class MainWindow(QWidget):
         # customer 와 city 콤보박스의 값을 초기화 시킨다
         self.customerCombo.setCurrentText('ALL')
         self.cityCombo.setCurrentText('ALL')
+        query = DB_Queries()
+        city = query.selectCityFromCountry(self.countryActive)
+        columnName3 = list(city[0].keys())[0]
+        items3 = ['없음' if row[columnName3] == None else row[columnName3] for row in city]
+        self.cityCombo.clear()
+        self.cityCombo.addItems(['ALL'])
+        self.cityCombo.addItems(items3)
 
 
     # city 콤보박스를 선택했다면
