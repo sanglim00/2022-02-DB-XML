@@ -438,8 +438,11 @@ class MainWindow(QWidget):
 
 
     def clickedSellInfo(self):
-        self.orderNum = self.tableWidget.item(self.tableWidget.currentRow() , 0).text()
-        self.secondWindow()
+        if self.tableWidget.item(self.tableWidget.currentRow() , 0) == None:
+            return ;
+        else :
+            self.orderNum = self.tableWidget.item(self.tableWidget.currentRow() , 0).text()
+            self.secondWindow()
 
     # customer 콤보박스를 선택했다면
     def customerComboBoxActivated(self):
@@ -495,8 +498,16 @@ class MainWindow(QWidget):
         else:
             self.showWhat = query.searchSelectCity(self.cityActive)
 
+
+        if len(self.showWhat) == 0:
+            self.tableWidget.setRowCount(0)
+            self.tableWidget.setColumnCount(0)
+            self.cntResult.setTitle('검색된 주문의 개수: ' + str(0))
+            return ;
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(len(self.showWhat))
+        self.tableWidget.setColumnCount(len(self.showWhat[0]))
+        self.tableWidget.setHorizontalHeaderLabels(self.showWhat[0])
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.cntResult.setTitle('검색된 주문의 개수: '+ str(len(self.showWhat)))
@@ -518,11 +529,17 @@ class MainWindow(QWidget):
 
     # 초기화 버튼 클릭
     def initButtonClicked(self):
+        self.nowSelect = 'customer'
+        self.customerActive = "ALL"
+
         self.tableWidget.clearContents()
         self.customerCombo.setCurrentText('ALL')
         self.countryCombo.setCurrentText('ALL')
         self.cityCombo.setCurrentText('ALL')
         self.cntResult.setTitle('검색된 주문의 개수: ' + str(0))
+
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.setColumnCount(0)
 
 
 
