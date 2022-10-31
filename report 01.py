@@ -159,6 +159,7 @@ class SaveMyData:
         self.data = data
         self.orderNumber = orderNumber
 
+    # csv로 출력
     def CSV(self):
         with open(str(self.orderNumber) + '.csv', 'w', encoding='utf-8') as f:
             w = csv.writer(f)
@@ -166,6 +167,7 @@ class SaveMyData:
             for item in self.data:
                 w.writerow(item.values())
 
+    # json으로 출력
     def JSON(self):
         for i in self.data:
             i['priceEach'] = str(i['priceEach']) # 문자형으로 변환하여 저장
@@ -174,6 +176,7 @@ class SaveMyData:
         with open(str(self.orderNumber)+'.json', 'w', encoding='utf-8') as f:
             json.dump(self.data, f, indent=4, ensure_ascii = False)
 
+    # xml로 출력
     def XML(self):
         rootElement = ET.Element('TABLE')
 
@@ -190,7 +193,7 @@ class SaveMyData:
         ET.ElementTree(rootElement).write(str(self.orderNumber)+'.xml', encoding='utf-8', xml_declaration=True)
 
 
-
+# 주문의 상세 내역을 보여주는 창
 class SubWindow(QWidget):
     def __init__(self, orderNumber):
         super().__init__()
@@ -316,7 +319,7 @@ class SubWindow(QWidget):
         QMessageBox.about(self, type ,'파일을 저장했습니다.')
 
 
-
+# 메인 화면
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -332,7 +335,6 @@ class MainWindow(QWidget):
 
         # 가장 마지막으로 선택한 콤보박스를 확인하기 위한 변수
         self.nowSelect = ''
-
 
         self.setWindowTitle("주문 검색 페이지")
         self.setGeometry(0, 0, 800, 600)
@@ -470,6 +472,8 @@ class MainWindow(QWidget):
         self.nowSelect = 'city'
         # country 콤보박스의 값을 초기화 시킨다
         self.customerCombo.setCurrentText('ALL')
+        if self.cityActive == "ALL" :
+            self.countryCombo.setCurrentText('ALL')
 
 
     # 검색 버튼 클릭
